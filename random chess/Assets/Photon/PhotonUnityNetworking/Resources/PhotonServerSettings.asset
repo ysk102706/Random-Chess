@@ -49,6 +49,9 @@ MonoBehaviour:
   - DrawSync
   - SurrenderSync
   - InsufficientMaterialsSync
+  - syncBoard
+  - SyncEnPassant
+  - SyncBoard
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1

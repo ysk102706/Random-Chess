@@ -58,57 +58,34 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
 
     private string mode;
 
-    [SerializeField]
-    private Sprite BKing;
-    [SerializeField]
-    private Sprite BQueen;
-    [SerializeField]
-    private Sprite BRook;
-    [SerializeField]
-    private Sprite BBishop;
-    [SerializeField]
-    private Sprite BKnight;
-    [SerializeField]
-    private Sprite BPawn;
-    [SerializeField]
-    private Sprite WKing;
-    [SerializeField]
-    private Sprite WQueen;
-    [SerializeField]
-    private Sprite WRook;
-    [SerializeField]
-    private Sprite WBishop;
-    [SerializeField]
-    private Sprite WKnight;
-    [SerializeField]
-    private Sprite WPawn;
-    [SerializeField]
-    private Sprite None;
-    [SerializeField]
-    private Sprite EMP;
+    [SerializeField] private Sprite BKing;
+    [SerializeField] private Sprite BQueen;
+    [SerializeField] private Sprite BRook;
+    [SerializeField] private Sprite BBishop;
+    [SerializeField] private Sprite BKnight;
+    [SerializeField] private Sprite BPawn;
+    [SerializeField] private Sprite WKing;
+    [SerializeField] private Sprite WQueen;
+    [SerializeField] private Sprite WRook;
+    [SerializeField] private Sprite WBishop;
+    [SerializeField] private Sprite WKnight;
+    [SerializeField] private Sprite WPawn;
+    [SerializeField] private Sprite None;
+    [SerializeField] private Sprite EMP;
 
-    [SerializeField]
-    private GameObject WBCheck;
-    [SerializeField]
-    private GameObject WWCheck;
+    [SerializeField] private GameObject WBCheck;
+    [SerializeField] private GameObject WWCheck;
 
-    [SerializeField]
-    private GameObject BBCheck;
-    [SerializeField]
-    private GameObject BWCheck;
+    [SerializeField] private GameObject BBCheck;
+    [SerializeField] private GameObject BWCheck;
 
-    [SerializeField]
-    private GameObject Loading;
+    [SerializeField] private GameObject Loading;
 
-    [SerializeField]
-    private GameObject Result;
-    [SerializeField]
-    private Text textbox;
+    [SerializeField] private GameObject Result;
+    [SerializeField] private Text textbox;
 
-    [SerializeField]
-    private GameObject WDrawRecive;
-    [SerializeField]
-    private GameObject BDrawRecive;
+    [SerializeField] private GameObject WDrawRecive;
+    [SerializeField] private GameObject BDrawRecive;
 
     void Update()
     {
@@ -168,11 +145,12 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
 
     private void Awake()
     {
+        Screen.SetResolution(1920, 1080, true);
         photonView = gameObject.GetComponent<PhotonView>();
 
         if (instance != null && instance != this)
         {
-            Destroy(this.gameObject);
+            Destroy(gameObject);
         }
         else
         {
@@ -575,20 +553,20 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
         return TurnNum;
     }
 
-    public ChessPieces getPieces(string name)
-    {
-        switch (name)
-        {
-            case "King": return new King();
-            case "Queen": return new Queen();
-            case "Rook": return new Rook();
-            case "Bishop": return new Bishop();
-            case "Knight": return new Knight();
-            case "Pawn": return new Pawn();
-            case " ": return new ChessPieces();
-        }
-        return new ChessPieces();
-    }
+    //public ChessPieces getPieces(string name)
+    //{
+    //    switch (name)
+    //    {
+    //        case "King": return new King();
+    //        case "Queen": return new Queen();
+    //        case "Rook": return new Rook();
+    //        case "Bishop": return new Bishop();
+    //        case "Knight": return new Knight();
+    //        case "Pawn": return new Pawn();
+    //        case " ": return new ChessPieces();
+    //    }
+    //    return new ChessPieces();
+    //}
 
     public void WCheck(bool value)
     {
