@@ -44,7 +44,7 @@ public class Promotion : MonoBehaviour
 
     public void ChangePieces(string PromotionTarget)
     {
-        PlayManager.instance.ChangePieces(Swap(0), x_pos, PromotionTarget);
+        PlayManager.instance.ChangePawn(Swap(0), x_pos, PromotionTarget);
         gameObject.SetActive(false);
     }
 

@@ -10,30 +10,73 @@ public class Pawn : Pieces
     public override void SetMovePoint(EColor _color, int y, int x)
     {
         board = ReverseBoard(_color, PlayManager.instance.board);
+        tempBoard = board;
         bool[,] enPassant = ReverseEnPassant(_color, EnPassant);
         EColor _compareColor = EColor.none;
 
         if (OverCheck(y - 1, x) && board[y - 1, x].pieces == null)
         {
-            movePoint[y - 1, x] = true;
-            if (y == 6 && board[y - 2, x].pieces == null) movePoint[y - 2, x] = true;
+            TempMove((this, _color), y, x, y - 1, x);
+            if (AllConfirmPos(_color, 8, 8))
+            {
+                movePoint[y - 1, x] = true;
+                if (y == 6 && board[y - 2, x].pieces == null)
+                {
+                    TempMove((this, _color), y - 1, x, y - 2, x);
+                    if (AllConfirmPos(_color, 8, 8))
+                    {
+                        movePoint[y - 2, x] = true;
+                    }
+                    TempRecovery((this, _color), y - 1, x, y - 2, x);
+                }
+            }
+            TempRecovery((this, _color), y, x, y - 1, x);
         }
 
         if (OverCheck(y - 1, x - 1))
         {
             _compareColor = board[y - 1, x - 1].color;
-            if (_compareColor != EColor.none && _compareColor != _color) movePoint[y - 1, x - 1] = true;
+            if (_compareColor != EColor.none && _compareColor != _color)
+            {
+                TempMove((this, _color), y, x, y - 1, x - 1);
+                if (AllConfirmPos(_color, 8, 8))
+                {
+                    movePoint[y - 1, x - 1] = true;
+                    if (board[y - 1, x - 1].pieces.GetType() == typeof(King)) PlayManager.instance.sendCheckData = true;
+                }
+                TempRecovery((this, _color), y, x, y - 1, x - 1);
+            }
         }
         if (OverCheck(y - 1, x + 1))
         {
             _compareColor = board[y - 1, x + 1].color;
-            if (_compareColor != EColor.none && _compareColor != _color) movePoint[y - 1, x + 1] = true;
+            if (_compareColor != EColor.none && _compareColor != _color)
+            {
+                TempMove((this, _color), y, x, y - 1, x + 1);
+                if (AllConfirmPos(_color, 8, 8))
+                {
+                    movePoint[y - 1, x + 1] = true;
+                    if (board[y - 1, x + 1].pieces.GetType() == typeof(King)) PlayManager.instance.sendCheckData = true;
+                }
+                TempRecovery((this, _color), y, x, y - 1, x + 1);
+            }
+
         }
 
         if (y == 3)
         {
-            if (OverCheck(y - 1, x - 1) && enPassant[y, x - 1]) movePoint[y - 1, x - 1] = true;
-            if (OverCheck(y - 1, x + 1) && enPassant[y, x + 1]) movePoint[y - 1, x + 1] = true;
+            if (OverCheck(y - 1, x - 1) && enPassant[y, x - 1])
+            {
+                TempMove((this, _color), y, x, y - 1, x - 1);
+                if (AllConfirmPos(_color, 8, 8)) movePoint[y - 1, x - 1] = true;
+                TempRecovery((this, _color), y, x, y - 1, x - 1);
+            }
+            if (OverCheck(y - 1, x + 1) && enPassant[y, x + 1])
+            {
+                TempMove((this, _color), y, x, y - 1, x + 1);
+                if (AllConfirmPos(_color, 8, 8)) movePoint[y - 1, x + 1] = true;
+                TempRecovery((this, _color), y, x, y - 1, x + 1);
+            }
         }
     }
 
@@ -56,5 +99,22 @@ public class Pawn : Pieces
         else temp = board;
 
         return temp;
+    }
+
+    public override bool PiecesConfirmPos(EColor _color, int py, int px, int ay, int ax)
+    {
+        if (OverCheck(py + 1, px - 1))
+        {
+            if (py + 1 == ay && px - 1 == ax) return true;
+            if (tempBoard[py + 1, px - 1] == (PlayManager.instance._king, _color)) return true;
+        }
+
+        if (OverCheck(py + 1, px + 1))
+        {
+            if (py + 1 == ay && px + 1 == ax) return true;
+            if (tempBoard[py + 1, px + 1] == (PlayManager.instance._king, _color)) return true;
+        }
+
+        return false;
     }
 }

@@ -2,6 +2,7 @@ using Photon.Pun;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class PlayManager : MonoBehaviour
@@ -11,6 +12,9 @@ public class PlayManager : MonoBehaviour
     public EColor playerColor;
 
     public GameObject promotionPrefab;
+
+    public bool isCheck = false;
+    public bool sendCheckData = false;
 
     #region Pieces
     public King _king;
@@ -34,6 +38,7 @@ public class PlayManager : MonoBehaviour
     public Action Render;
     public Action MovePointRender;
     public Action<int> promotion;
+    public Action CheckRender;
     #endregion
 
     private void Awake()
@@ -65,6 +70,7 @@ public class PlayManager : MonoBehaviour
     {
         Init?.Invoke();
         Render?.Invoke();
+        CheckRender?.Invoke();
     }
 
     public void SetMovePointBoard(bool[,] _movePoint)
@@ -96,11 +102,52 @@ public class PlayManager : MonoBehaviour
         }
         #endregion
 
+        #region Rook
+        if (board[y, x].pieces == _rook)
+        {
+            (int y, int x) swapPos = (Swap(pos.y), Swap(pos.x));
+            if (Rook.moveCheck.ContainsKey(swapPos)) Rook.moveCheck[swapPos] = false;
+        }
+        #endregion
+
+        #region King
+        if (board[y, x].pieces == _king)
+        {
+            if (!King.isMove) {
+                int dir = x - pos.x;
+                if (Mathf.Abs(dir) == 2)
+                {
+                    if (dir < 0)
+                    {
+                        board[y, x + 1] = (_rook, playerColor);
+                        board[y, 0] = (null, EColor.none);
+                    }
+                    else
+                    {
+                        board[y, x - 1] = (_rook, playerColor);
+                        board[y, 7] = (null, EColor.none);
+                    }
+                }
+            }
+
+            King.isMove = true;
+        }
+        #endregion
+
+        #region Sync
         Render?.Invoke();
         SendBoard();
+
+        if (isCheck) isCheck = false;
+
+        board[y, x].pieces.SetMovePoint(playerColor, Swap(y), Swap(x));
+        SendCheckData();
+        Debug.Log(sendCheckData);
+        CheckRender?.Invoke();
+        #endregion
     }
 
-    public void ChangePieces(int y, int x, string piece)
+    public void ChangePawn(int y, int x, string piece)
     {
         if (piece == "Queen") board[y, x] = (_queen, playerColor);
         else if (piece == "Rook") board[y, x] = (_rook, playerColor);
@@ -165,6 +212,21 @@ public class PlayManager : MonoBehaviour
     public void SendEnPassant(int y, int x)
     {
         photonView.RPC("SyncEnPassant", RpcTarget.Others, y, x);
+    }
+    #endregion
+
+    #region SyncCheck
+    [PunRPC]
+    public void SyncCheckData(bool _checkData, bool _otherCheckData)
+    {
+        isCheck = _checkData;
+        sendCheckData = _otherCheckData;
+        CheckRender?.Invoke();
+    }
+
+    public void SendCheckData()
+    {
+        photonView.RPC("SyncCheckData", RpcTarget.Others, sendCheckData, isCheck);
     }
     #endregion
 }

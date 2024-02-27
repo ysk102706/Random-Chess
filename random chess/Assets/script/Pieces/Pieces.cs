@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Mathematics;
@@ -18,6 +19,8 @@ public class Pieces : MonoBehaviour
 
     public bool[,] movePoint;
     public (Pieces pieces, EColor color)[,] board;
+    public static (Pieces pieces, EColor color)[,] tempBoard;
+    public static (Pieces pieces, EColor color) tempPiece;
 
     public Sprite GetImage(EColor _color)
     {
@@ -57,4 +60,82 @@ public class Pieces : MonoBehaviour
     {
         return y >= 0 && y < 8 && x >= 0 && x < 8;
     }
+
+    public void LineCheck((Pieces piece, EColor color) piece, int y, int x, int[] move_y, int[] move_x)
+    {
+        EColor _compareColor = EColor.none;
+
+        for (int idx = 0; idx < move_y.Length; idx++)
+        {
+            for (int pos = 1; pos < 8; pos++)
+            {
+                int ny = move_y[idx] * pos + y;
+                int nx = move_x[idx] * pos + x;
+
+                if (!OverCheck(ny, nx)) break;
+                
+                _compareColor = board[ny, nx].color;
+                if (_compareColor != piece.color)
+                {
+                    TempMove(piece, y, x, ny, nx);
+                    if (AllConfirmPos(piece.color, 8, 8))
+                    {
+                        movePoint[ny, nx] = true;
+                        if (tempPiece.pieces.GetType() == typeof(King)) PlayManager.instance.sendCheckData = true;
+                    }
+                    TempRecovery(piece, y, x, ny, nx);
+                    if (_compareColor != EColor.none) break;
+                }
+                else break;
+            }
+        }
+    }
+
+    public bool LineCheckPos(EColor _color, int y, int x, int ay, int ax, int[] move_y, int[] move_x)
+    {
+        for (int idx = 0; idx < move_y.Length; idx++)
+        {
+            for (int pos = 1; pos < 8; pos++)
+            {
+                int ny = move_y[idx] * pos + y;
+                int nx = move_x[idx] * pos + x;
+
+                if (!OverCheck(ny, nx)) break;
+                if (ny == ay && nx == ax) return true;
+                if (tempBoard[ny, nx] == (PlayManager.instance._king, _color)) return true;
+                if (tempBoard[ny, nx].color != EColor.none) break;
+            }
+
+        }
+        return false;
+    }
+
+    public bool AllConfirmPos(EColor _color, int ay, int ax)
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            for (int j = 0; j < 8; j++)
+            {
+                if (board[i, j].color != _color && board[i, j].color != EColor.none && board[i, j].pieces.PiecesConfirmPos(_color, i, j, ay, ax)) return false;
+            }
+        }
+
+        return true;
+    }
+
+    public virtual bool PiecesConfirmPos(EColor _color, int py, int px, int ay, int ax) { return false; }
+
+    public void TempMove((Pieces piece, EColor color) piece, int post_y, int post_x, int pre_y, int pre_x)
+    {
+        tempPiece = board[pre_y, pre_x];
+        tempBoard[pre_y, pre_x] = piece;
+        tempBoard[post_y, post_x] = (null, EColor.none);
+    }
+
+    public void TempRecovery((Pieces piece, EColor color) piece, int post_y, int post_x, int pre_y, int pre_x)
+    {
+        tempBoard[pre_y, pre_x] = tempPiece;
+        tempBoard[post_y, post_x] = piece;
+    }
+
 }
