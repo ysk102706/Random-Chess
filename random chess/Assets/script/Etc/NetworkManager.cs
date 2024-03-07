@@ -64,7 +64,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     private IEnumerator StartCheck()
     {
         yield return null;
-        if (PhotonNetwork.CurrentRoom.PlayerCount == PhotonNetwork.CurrentRoom.MaxPlayers) PhotonNetwork.LoadLevel("Test");
+        if (PhotonNetwork.CurrentRoom.PlayerCount == PhotonNetwork.CurrentRoom.MaxPlayers) PhotonNetwork.LoadLevel("Play");
         else StartCoroutine("StartCheck");
     }
 
