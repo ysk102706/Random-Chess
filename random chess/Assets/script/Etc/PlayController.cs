@@ -4,17 +4,35 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
-public class PlayManager : MonoBehaviour
+public class PlayController : MonoBehaviour
 {
-    public static PlayManager instance;
+    public static PlayController instance;
     public PhotonView photonView;
     public EColor playerColor;
 
     public GameObject promotionPrefab;
 
+    public GameObject drawRequestWindow;
+    public GameObject waitResponse;
+
+    public GameObject resultWindow;
+    public Text resultWindowText;
+    public Text causeWindowText;
+
     public bool isCheck = false;
     public bool sendCheckData = false;
+
+    public bool isCheckMate = false;
+    public bool isStailMate = false;
+    public bool isInsufficientMaterials = false;
+
+    public bool DrawRequest = false;
+
+    public int turnCount;
+    public EColor turnColor;
 
     #region Pieces
     public King _king;
@@ -39,6 +57,7 @@ public class PlayManager : MonoBehaviour
     public Action MovePointRender;
     public Action<int> promotion;
     public Action CheckRender;
+    public Action myTurn;
     #endregion
 
     private void Awake()
@@ -71,6 +90,15 @@ public class PlayManager : MonoBehaviour
         Init?.Invoke();
         Render?.Invoke();
         CheckRender?.Invoke();
+
+        turnColor = EColor.white;
+
+        myTurn?.Invoke();
+
+        myTurn += () =>
+        {
+            ConfirmMate();
+        };
     }
 
     public void SetMovePointBoard(bool[,] _movePoint)
@@ -142,9 +170,17 @@ public class PlayManager : MonoBehaviour
 
         board[y, x].pieces.SetMovePoint(playerColor, Swap(y), Swap(x));
         SendCheckData();
-        Debug.Log(sendCheckData);
         CheckRender?.Invoke();
+
+        turnCount++;
+        turnColor = (EColor)((int)turnColor % 2 + 1);
+        SendTurn();
+
+        InsufficienMaterialsCheck();
+        SendInsufficien();
         #endregion
+
+        if (GameManager.instance.mode == "R" && turnCount % 10 == 0) RandomMap();
     }
 
     public void ChangePawn(int y, int x, string piece)
@@ -158,11 +194,123 @@ public class PlayManager : MonoBehaviour
         SendBoard();
     }
 
+    public void ConfirmMate()
+    {
+        int sum = 0;
+
+        for (int i = 0; i < 8; i++)
+        {
+            for (int j = 0; j < 8; j++)
+            {
+                if (board[i, j].color != playerColor) continue;
+                sum += board[i, j].pieces.SetMovePoint(playerColor, Swap(i), Swap(j));
+            }
+        }
+
+        if (sum == 0)
+        {
+            if (isCheck) isCheckMate = true;
+            else isStailMate = true;
+            SendMate();
+        }
+    }
+
     private int Swap(int val)
     {
         return playerColor == EColor.white ? val : 7 - val;
     }
 
+    private void InsufficienMaterialsCheck()
+    {
+        int queen = 0;
+        int rook = 0;
+        int bishop = 0;
+        int knight = 0;
+        int pawn = 0;
+
+        int bishopColor = -1;
+        bool bishopCheck = false;
+
+        for (int i = 0; i < 8; i++)
+        {
+            for (int j = 0; j < 8; j++)
+            {
+                if (board[i, j].pieces == _queen) queen++;
+                else if (board[i, j].pieces == _rook) rook++;
+                else if (board[i, j].pieces == _bishop)
+                {
+                    if (bishopColor == -1) bishopColor = i % 2 == 1 ? 1 - (j % 2) : j % 2;
+                    else if (bishopColor != (i % 2 == 1 ? 1 - (j % 2) : j % 2)) bishopCheck = true;
+
+                    if (!bishopCheck) bishop++;
+                    else bishop = -1;
+                }
+                else if (board[i, j].pieces == _knight) knight++;
+                else if (board[i, j].pieces == _pawn) pawn++;
+            }
+        }
+
+        if (queen == 0 && rook == 0 && bishop == 0 && knight == 0 && pawn == 0) isInsufficientMaterials = true;
+        if (queen == 0 && rook == 0 && bishop > 0 && knight == 0 && pawn == 0) isInsufficientMaterials = true;
+        if (queen == 0 && rook == 0 && bishop == 0 && knight > 0 && pawn == 0) isInsufficientMaterials = true;
+    }
+
+    public void PrintResult(string _result, string _cause)
+    {
+        resultWindow.SetActive(true);
+        resultWindowText.text = _result;
+        causeWindowText.text = _cause;
+        StartCoroutine(MoveToTitle());
+    }
+
+    private IEnumerator MoveToTitle()
+    {
+        yield return new WaitForSeconds(3.5f);
+        SceneManager.LoadScene("Start");
+    }
+
+    private IEnumerator SendDrawRequestAccept()
+    {
+        yield return new WaitForSeconds(1.5f);
+        waitResponse.SetActive(false);
+        PrintResult("Draw", "DrawRequest");
+    }
+
+    private IEnumerator SendDrawRequestRefuse()
+    {
+        yield return new WaitForSeconds(1.5f);
+        waitResponse.SetActive(false);
+    }
+
+    private void RandomMap()
+    {
+        int pawn = 50;
+        int knight = 64;
+        int bishop = 78;
+        int rook = 92;
+
+        for (int i = 0; i < 8; i++)
+        {
+            for (int j = 0; j < 8; j++)
+            {
+                if (board[i, j].pieces == _king || board[i, j].pieces == null) continue;
+
+                EColor color = board[i, j].color;
+                int r = UnityEngine.Random.Range(1, 101);
+
+                if (r <= pawn) board[i, j] = (_pawn, color);
+                else if (r <= knight) board[i, j] = (_knight, color);
+                else if (r <= bishop) board[i, j] = (_bishop, color);
+                else if (r <= rook) board[i, j] = (_rook, color);
+                else  board[i, j] = (_queen, color);
+            }
+        }
+
+        Render?.Invoke();
+        SendBoard();
+    }
+
+    #region Sync
     #region SyncBoard
     public Pieces GetPiece(string  name)
     {
@@ -228,5 +376,82 @@ public class PlayManager : MonoBehaviour
     {
         photonView.RPC("SyncCheckData", RpcTarget.Others, sendCheckData, isCheck);
     }
+    #endregion
+
+    #region SyncTurn
+    [PunRPC]
+    public void SyncTurn(int _turnCount, int _color)
+    {
+        turnCount = _turnCount;
+        turnColor = (EColor)_color;
+        myTurn?.Invoke();
+    }
+
+    public void SendTurn()
+    {
+        photonView.RPC("SyncTurn", RpcTarget.Others, turnCount, (int)turnColor);
+        myTurn?.Invoke();
+    }
+    #endregion
+
+    #region SyncMate
+    [PunRPC]
+    public void SyncMate(bool _isCheckMate, bool _isStailMate)
+    {
+        isCheckMate = _isCheckMate;
+        isStailMate = _isStailMate;
+        if (isCheckMate) PrintResult("Win", "CheckMate");
+        if (isStailMate) PrintResult("Draw", "StailMate");
+    }
+
+    public void SendMate()
+    {
+        photonView.RPC("SyncMate", RpcTarget.Others, isCheckMate, isStailMate);
+        if (isCheckMate) PrintResult("Lose", "CheckMate");
+        if (isStailMate) PrintResult("Draw", "StailMate");
+    }
+    #endregion
+
+    #region SyncInsufficien
+    [PunRPC]
+    public void SyncInsufficien(bool _value)
+    {
+        if (_value) PrintResult("Draw", "InsufficienMaterials");
+        isInsufficientMaterials = _value;
+    }
+
+    public void SendInsufficien()
+    {
+        photonView.RPC("SyncInsufficien", RpcTarget.Others, isInsufficientMaterials);
+        if (isInsufficientMaterials) PrintResult("Draw", "InsufficienMaterials");
+    }
+    #endregion
+
+    #region SendSurrender
+    [PunRPC]
+    public void SendSurrender() => PrintResult("Win", "Surrender");
+    #endregion
+
+    #region SendDrawRequest
+    [PunRPC]
+    public void SendDrawRequest()
+    {
+        drawRequestWindow.SetActive(true);
+    }
+
+    [PunRPC]
+    public void SendDrawResponse(bool _val)
+    {
+        if (_val) {
+            waitResponse.GetComponentInChildren<Text>().text = "Accept";
+            StartCoroutine(SendDrawRequestAccept());
+        }
+        else
+        {
+            waitResponse.GetComponentInChildren<Text>().text = "Refuse";
+            StartCoroutine(SendDrawRequestRefuse());
+        }
+    }
+    #endregion
     #endregion
 }

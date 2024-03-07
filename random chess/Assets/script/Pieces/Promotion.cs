@@ -21,14 +21,14 @@ public class Promotion : MonoBehaviour
 
     private void Start()
     {
-        playerColor = PlayManager.instance.playerColor;
+        playerColor = PlayController.instance.playerColor;
 
         queen.GetComponent<Image>().sprite = _queen.GetImage(playerColor);
         rook.GetComponent<Image>().sprite = _rook.GetImage(playerColor);
         bishop.GetComponent<Image>().sprite = _bishop.GetImage(playerColor);
         knight.GetComponent<Image>().sprite = _knight.GetImage(playerColor);
 
-        PlayManager.instance.promotion += (x) =>
+        PlayController.instance.promotion += (x) =>
         {
             x_pos = x;
             SetPos(Swap(x)); 
@@ -44,7 +44,7 @@ public class Promotion : MonoBehaviour
 
     public void ChangePieces(string PromotionTarget)
     {
-        PlayManager.instance.ChangePawn(Swap(0), x_pos, PromotionTarget);
+        PlayController.instance.ChangePawn(Swap(0), x_pos, PromotionTarget);
         gameObject.SetActive(false);
     }
 

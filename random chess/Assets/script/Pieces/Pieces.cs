@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Mathematics;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,7 +18,7 @@ public class Pieces : MonoBehaviour
     public Sprite _whiteImage;
     public Sprite _blackImage;
 
-    public bool[,] movePoint;
+    public bool[,] movePoint = new bool[8, 8];
     public (Pieces pieces, EColor color)[,] board;
     public static (Pieces pieces, EColor color)[,] tempBoard;
     public static (Pieces pieces, EColor color) tempPiece;
@@ -32,7 +33,7 @@ public class Pieces : MonoBehaviour
         Movement.instance.Clear();
         movePoint = new bool[8, 8];
         SetMovePoint(_color, y, x);
-        PlayManager.instance.SetMovePointBoard(movePoint);
+        PlayController.instance.SetMovePointBoard(movePoint);
     }
 
     public (Pieces pieces, EColor color)[,] ReverseBoard(EColor _color, (Pieces pieces, EColor color)[,] board)
@@ -54,15 +55,16 @@ public class Pieces : MonoBehaviour
         return temp;
     }
 
-    public virtual void SetMovePoint(EColor _color, int y, int x) { }
+    public virtual int SetMovePoint(EColor _color, int y, int x) { return 0; }
 
     public bool OverCheck(int y, int x)
     {
         return y >= 0 && y < 8 && x >= 0 && x < 8;
     }
 
-    public void LineCheck((Pieces piece, EColor color) piece, int y, int x, int[] move_y, int[] move_x)
+    public int LineCheck((Pieces piece, EColor color) piece, int y, int x, int[] move_y, int[] move_x)
     {
+        int _movementCount = 0;
         EColor _compareColor = EColor.none;
 
         for (int idx = 0; idx < move_y.Length; idx++)
@@ -80,8 +82,9 @@ public class Pieces : MonoBehaviour
                     TempMove(piece, y, x, ny, nx);
                     if (AllConfirmPos(piece.color, 8, 8))
                     {
+                        _movementCount++;
                         movePoint[ny, nx] = true;
-                        if (tempPiece.pieces.GetType() == typeof(King)) PlayManager.instance.sendCheckData = true;
+                        if (tempPiece.pieces == PlayController.instance._king) PlayController.instance.sendCheckData = true;
                     }
                     TempRecovery(piece, y, x, ny, nx);
                     if (_compareColor != EColor.none) break;
@@ -89,6 +92,8 @@ public class Pieces : MonoBehaviour
                 else break;
             }
         }
+
+        return _movementCount;
     }
 
     public bool LineCheckPos(EColor _color, int y, int x, int ay, int ax, int[] move_y, int[] move_x)
@@ -102,7 +107,7 @@ public class Pieces : MonoBehaviour
 
                 if (!OverCheck(ny, nx)) break;
                 if (ny == ay && nx == ax) return true;
-                if (tempBoard[ny, nx] == (PlayManager.instance._king, _color)) return true;
+                if (tempBoard[ny, nx] == (PlayController.instance._king, _color)) return true;
                 if (tempBoard[ny, nx].color != EColor.none) break;
             }
 

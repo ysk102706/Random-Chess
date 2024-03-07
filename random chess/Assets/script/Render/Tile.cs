@@ -17,11 +17,13 @@ public class Tile : MonoBehaviour
 
     private void OnTileClick()
     {
+        if (PlayController.instance.turnColor != playerColor) return;
+
         string pos = gameObject.name;
         int y = pos[0] - 48;
         int x = pos[3] - 48;
 
-        (Pieces piece, EColor color) piece = PlayManager.instance.board[Swap(y), Swap(x)];
+        (Pieces piece, EColor color) piece = PlayController.instance.board[Swap(y), Swap(x)];
         if (playerColor != piece.color) Movement.instance.Move(y, x);
         else
         {

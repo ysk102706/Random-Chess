@@ -15,16 +15,16 @@ public class TileRenderer : MonoBehaviour
     private void Awake()
     {
 
-        PlayManager.instance.Init += () =>
+        PlayController.instance.Init += () =>
         {
-            playerColor = PlayManager.instance.playerColor;
+            playerColor = PlayController.instance.playerColor;
             InitBoard();
         };
-        PlayManager.instance.Render += () =>
+        PlayController.instance.Render += () =>
         {
             Rendering();
         };
-        PlayManager.instance.MovePointRender += () =>
+        PlayController.instance.MovePointRender += () =>
         {
             MovePointRendering();
         };
@@ -56,7 +56,7 @@ public class TileRenderer : MonoBehaviour
             {
                 int ypos = Swap(i);
                 int xpos = Swap(j);
-                (Pieces piece, EColor color) piece = PlayManager.instance.board[ypos, xpos];
+                (Pieces piece, EColor color) piece = PlayController.instance.board[ypos, xpos];
                 Image img = renderBoard[i, j].piece;
                 img.color = new Color(1, 1, 1, piece.piece == null ? 0 : 1);
                 if (piece.piece == null) img.sprite = None;

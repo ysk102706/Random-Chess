@@ -53,6 +53,12 @@ MonoBehaviour:
   - SyncEnPassant
   - SyncBoard
   - SyncCheckData
+  - SyncTurn
+  - SyncMate
+  - SyncInsufficien
+  - SendDrawRequest
+  - SendDrawResponse
+  - SendSurrender
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1

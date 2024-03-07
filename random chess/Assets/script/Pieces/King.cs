@@ -9,9 +9,10 @@ public class King : Pieces
 
     public static bool isMove = false;
 
-    public override void SetMovePoint(EColor _color, int y, int x)
+    public override int SetMovePoint(EColor _color, int y, int x)
     {
-        board = ReverseBoard(_color, PlayManager.instance.board);
+        int _movementCount = 0;
+        board = ReverseBoard(_color, PlayController.instance.board);
         tempBoard = board;
 
         for (int idx = 0; idx < 8; idx++)
@@ -22,8 +23,12 @@ public class King : Pieces
             if (OverCheck(ny, nx) && board[ny, nx].color != _color)
             {
                 TempMove((this, _color), y, x, ny, nx);
-                if (AllConfirmPos(_color, 8, 8)) movePoint[ny, nx] = true;
-                TempRecovery((this, _color), ny, nx, y, x);
+                if (AllConfirmPos(_color, 8, 8))
+                {
+                    _movementCount++;
+                    movePoint[ny, nx] = true;
+                }
+                TempRecovery((this, _color), y, x, ny, nx);
             }
         }
 
@@ -35,14 +40,18 @@ public class King : Pieces
                 isCastling = true;
                 for (int pos = x - 1; pos > 0; pos--)
                 {
-                    if (board[y, pos].color != EColor.none && AllConfirmPos(_color, y, pos))
+                    if (board[y, pos].color != EColor.none || !AllConfirmPos(_color, y, pos))
                     {
                         isCastling = false;
                         break;
                     }
                 }
-
-                if (isCastling) movePoint[y, x - 2] = true;
+                
+                if (isCastling)
+                {
+                    _movementCount++;
+                    movePoint[y, x - 2] = true;
+                }
             }
 
             if (Rook.moveCheck[(7, 7)])
@@ -50,16 +59,22 @@ public class King : Pieces
                 isCastling = true;
                 for (int pos = x + 1; pos < 7; pos++)
                 {
-                    if (board[y, pos].color != EColor.none && AllConfirmPos(_color, y, pos))
+                    if (board[y, pos].color != EColor.none || !AllConfirmPos(_color, y, pos))
                     {
                         isCastling = false;
                         break;
                     }
                 }
 
-                if (isCastling) movePoint[y, x + 2] = true;
+                if (isCastling)
+                {
+                    _movementCount++;
+                    movePoint[y, x + 2] = true;
+                }
             }
         }
+
+        return _movementCount;
     }
 
     public override bool PiecesConfirmPos(EColor _color, int py, int px, int ay, int ax)
@@ -72,7 +87,7 @@ public class King : Pieces
             if (OverCheck(ny, nx))
             {
                 if (ny == ay && nx == ax) return true;
-                if (tempBoard[ny, nx] == (PlayManager.instance._king, _color)) return true;
+                if (tempBoard[ny, nx] == (PlayController.instance._king, _color)) return true;
             }
         }
 

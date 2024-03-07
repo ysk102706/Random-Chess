@@ -19,7 +19,7 @@ public class Movement : MonoBehaviour
 
     private void Start()
     {
-        playerColor = PlayManager.instance.playerColor;
+        playerColor = PlayController.instance.playerColor;
     }
 
     public void Clear()
@@ -29,10 +29,10 @@ public class Movement : MonoBehaviour
 
     public void Move(int y, int x)
     {
-        if (movePointBoard[y, x]) PlayManager.instance.MoveRender(Swap(y), Swap(x));
+        if (movePointBoard[y, x]) PlayController.instance.MoveRender(Swap(y), Swap(x));
         
         Clear();
-        PlayManager.instance.MovePointRender?.Invoke();
+        PlayController.instance.MovePointRender?.Invoke();
     }
 
     private int Swap(int val)

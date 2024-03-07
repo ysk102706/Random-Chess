@@ -57,6 +57,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     public override void OnJoinedRoom()
     {
+        GameManager.instance.mode = mode;
         StartCoroutine("StartCheck");
     }
 
