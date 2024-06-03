@@ -58,14 +58,13 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     public override void OnJoinedRoom()
     {
         GameManager.instance.mode = mode;
-        StartCoroutine("StartCheck");
+        StartCoroutine(StartCheck());
     }
 
     private IEnumerator StartCheck()
     {
-        yield return null;
-        if (PhotonNetwork.CurrentRoom.PlayerCount == PhotonNetwork.CurrentRoom.MaxPlayers) PhotonNetwork.LoadLevel("Play");
-        else StartCoroutine("StartCheck");
+        while (PhotonNetwork.CurrentRoom.PlayerCount != PhotonNetwork.CurrentRoom.MaxPlayers) yield return null;
+        PhotonNetwork.LoadLevel("Play");
     }
 
     private void Update()
